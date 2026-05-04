@@ -12,6 +12,11 @@ import { sessionManager } from './session-manager';
 import { initTray, refreshIdleStatus, restoreIdleAfterSession, setIdleStatusManually } from './tray-controller';
 import { restoreNetwork } from './network-blocking';
 import { screenshotLoop } from './screenshot-loop';
+import {
+  getScreenPermissionStatus,
+  openScreenPermissionSettings,
+  requestScreenPermission,
+} from './permissions';
 
 const DEV_URL = process.env.WORKSIGHT_DEV_URL ?? 'http://localhost:5174';
 const isDev = !app.isPackaged;
@@ -90,6 +95,19 @@ const registerIpc = () => {
   ipcMain.handle(CHANNELS.sessionCaptureNow, async () => {
     return screenshotLoop.captureNow();
   });
+
+  ipcMain.handle(CHANNELS.permissionScreenStatus, () => getScreenPermissionStatus());
+  ipcMain.handle(CHANNELS.permissionRequestScreen, async () => requestScreenPermission());
+  ipcMain.handle(CHANNELS.permissionOpenSettings, async () => {
+    await openScreenPermissionSettings();
+    return null;
+  });
+  ipcMain.handle(CHANNELS.appRelaunch, () => {
+    app.relaunch();
+    app.exit(0);
+    return null;
+  });
+
   ipcMain.handle(CHANNELS.trayUpdateStatus, (_e, s: string) => {
     setIdleStatusManually(s);
     return null;

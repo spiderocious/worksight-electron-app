@@ -19,6 +19,15 @@ export const CHANNELS = {
   // QA / candidate-visible "tap to test" — captures + uploads a screenshot now.
   sessionCaptureNow: 'session:capture-now',
 
+  // macOS Screen Recording permission. The renderer asks main to either
+  // re-check the current status OR trigger the OS prompt (the latter only
+  // works once per app install — after that the user has to flip it manually
+  // in System Settings, then relaunch the app).
+  permissionScreenStatus: 'permission:screen-status',
+  permissionRequestScreen: 'permission:request-screen',
+  permissionOpenSettings: 'permission:open-settings',
+  appRelaunch: 'app:relaunch',
+
   // Top-bar status updates (renderer pushes a status string when it knows more)
   trayUpdateStatus: 'tray:update-status',
 
@@ -80,3 +89,5 @@ export interface AbnormalRecoveryPayload {
   expiresAt: string;
   remainingMs: number;
 }
+
+export type ScreenPermissionStatus = 'granted' | 'denied' | 'restricted' | 'not-determined' | 'unknown';

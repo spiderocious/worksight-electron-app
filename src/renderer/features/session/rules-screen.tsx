@@ -20,6 +20,7 @@ interface Props {
   instanceId: string;
   onCancel: () => void;
   onStarted: (sessionId: string) => void;
+  onNeedsScreenPermission: () => void;
 }
 
 const RuleRow = ({
@@ -45,7 +46,7 @@ const RuleRow = ({
   );
 };
 
-export const RulesScreen = ({ instanceId, onCancel, onStarted }: Props) => {
+export const RulesScreen = ({ instanceId, onCancel, onStarted, onNeedsScreenPermission }: Props) => {
   const [acknowledged, setAcknowledged] = useState(false);
   const [starting, setStarting] = useState(false);
   const { push } = useToast();
@@ -59,6 +60,17 @@ export const RulesScreen = ({ instanceId, onCancel, onStarted }: Props) => {
   const handleStart = async () => {
     setStarting(true);
     try {
+      // Preflight: macOS Screen Recording permission. Without it, screenshots
+      // come back as black images and the session is worthless. Route to a
+      // dedicated screen rather than letting the candidate stumble into a
+      // broken session.
+      const status = await ws().permissions.screenStatus();
+      if (status !== 'granted') {
+        setStarting(false);
+        onNeedsScreenPermission();
+        return;
+      }
+
       const result = await ws().session.start({ instanceId });
       onStarted(result.sessionId);
     } catch (err) {

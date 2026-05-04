@@ -2,7 +2,9 @@ import { BrowserWindow } from 'electron';
 import { apiRequest } from './api-client';
 import { applyBlock, fetchBlocklist, restoreNetwork } from './network-blocking';
 import { screenshotLoop } from './screenshot-loop';
+import { startBlockedListener, stopBlockedListener } from './blocked-listener';
 import { cleanupLegacySessionFile, networkDirtyFlag } from './session-state';
+import { getScreenPermissionStatus } from './permissions';
 import { CHANNELS } from '../ipc/channels';
 import type {
   AbnormalRecoveryPayload,
@@ -22,6 +24,11 @@ interface ActiveSession {
   durationMinutes: number;
 }
 
+// Minimum gap between recording the same domain again. Browsers retry like
+// crazy when a request fails, so without debouncing we'd flood the API and
+// the screenshot loop with near-identical events.
+const BLOCKED_DEBOUNCE_MS = 5_000;
+
 // Just the fields we need on launch — the full dashboard payload has more.
 interface CandidateDashboardLite {
   inProgress?: Array<{ id: string; sessionId: string; expiresAt: string }>;
@@ -39,6 +46,8 @@ class SessionManager {
   private active: ActiveSession | null = null;
   private tickHandle: NodeJS.Timeout | null = null;
   private subscribers: Array<(p: SessionTickPayload) => void> = [];
+  // Last time we recorded each domain — used to debounce browser retry storms.
+  private lastBlockedAt = new Map<string, number>();
 
   isActive(): boolean {
     return this.active !== null;
@@ -63,6 +72,16 @@ class SessionManager {
     if (this.active) {
       throw new Error('A session is already in progress');
     }
+
+    // 0. Hard guard: macOS Screen Recording must be granted, otherwise the
+    //    screenshot loop captures black frames silently. The renderer should
+    //    have caught this on the rules screen and routed to the permissions
+    //    screen, but we belt-and-braces here too.
+    const screenStatus = getScreenPermissionStatus();
+    if (screenStatus !== 'granted') {
+      throw new Error('Screen Recording permission required. Open System Settings → Privacy & Security → Screen & System Audio Recording and enable WorkSight.');
+    }
+
     // 1. Apply network block FIRST (prompts for admin password). If this fails
     //    or the user cancels the password prompt, the server never knows a
     //    session was attempted — no orphan in_progress instance to clean up.
@@ -117,6 +136,7 @@ class SessionManager {
         }
       : undefined;
     screenshotLoop.start(data.sessionId, interval);
+    this.armBlockedListener(data.sessionId);
     this.startTick(win);
 
     return data;
@@ -219,6 +239,7 @@ class SessionManager {
       durationMinutes,
     };
     screenshotLoop.start(session.id);
+    this.armBlockedListener(session.id);
     this.startTick(win);
 
     return {
@@ -247,11 +268,48 @@ class SessionManager {
     this.tickHandle = setInterval(fire, SESSION_TICK_MS);
   }
 
+  /**
+   * Spins up the localhost listener that catches connection attempts to
+   * blocked domains. On each attempt: debounce by domain (5s), capture a
+   * screenshot, register the attempt with the backend.
+   */
+  private armBlockedListener(sessionId: string): void {
+    this.lastBlockedAt.clear();
+    startBlockedListener((domain) => {
+      const now = Date.now();
+      const last = this.lastBlockedAt.get(domain) ?? 0;
+      if (now - last < BLOCKED_DEBOUNCE_MS) return;
+      this.lastBlockedAt.set(domain, now);
+      void this.recordBlockedAttempt(sessionId, domain, now);
+    });
+  }
+
+  private async recordBlockedAttempt(sessionId: string, domain: string, atMs: number): Promise<void> {
+    const attemptedAt = new Date(atMs).toISOString();
+    let screenshotKey: string | undefined;
+    try {
+      const shot = await screenshotLoop.captureNow();
+      if (shot.ok && shot.key) screenshotKey = shot.key;
+    } catch (err) {
+      console.warn('[worksight] blocked-attempt screenshot failed', err);
+    }
+    try {
+      await apiRequest(`/candidate/sessions/${sessionId}/blocked-attempts`, {
+        method: 'POST',
+        body: { domain, attemptedAt, screenshotKey },
+      });
+    } catch (err) {
+      console.warn('[worksight] blocked-attempt record failed', err);
+    }
+  }
+
   private async teardown(win: BrowserWindow | null, reason: 'ended' | 'expired') {
     if (this.tickHandle) {
       clearInterval(this.tickHandle);
       this.tickHandle = null;
     }
+    stopBlockedListener();
+    this.lastBlockedAt.clear();
     screenshotLoop.stop();
     const sid = this.active?.sessionId;
     this.active = null;

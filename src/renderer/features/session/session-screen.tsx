@@ -148,8 +148,13 @@ export const SessionScreen = ({ sessionId, recovered, initialInstanceId, onEnded
           </div>
         )}
 
+        {/* When the reviewer chose to hide the real test, mainTitle/mainBrief
+            are populated and we use them inside the session. Otherwise fall
+            back to the public title/brief. */}
         <h1 className="font-display text-3xl tracking-tight">
-          {instance?.assignment.title ?? 'Session'}
+          {(instance?.assignment.hideUntilStart
+            ? instance.assignment.mainTitle
+            : instance?.assignment.title) ?? 'Session'}
         </h1>
         <p className="text-sm text-ink-muted mt-1">
           Code wherever you like. WorkSight keeps an eye on the rules from here.
@@ -158,7 +163,9 @@ export const SessionScreen = ({ sessionId, recovered, initialInstanceId, onEnded
         <Card className="mt-6">
           <CardHeader title="Brief" />
           <div className="text-sm whitespace-pre-wrap text-ink-muted leading-relaxed max-h-60 overflow-y-auto">
-            {instance?.assignment.brief ?? '—'}
+            {(instance?.assignment.hideUntilStart
+              ? instance.assignment.mainBrief
+              : instance?.assignment.brief) ?? '—'}
           </div>
         </Card>
 

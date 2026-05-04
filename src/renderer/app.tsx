@@ -9,6 +9,10 @@ import { BriefScreen } from '@features/assignment/brief-screen';
 import { RulesScreen } from '@features/session/rules-screen';
 import { SessionScreen } from '@features/session/session-screen';
 import { SubmittedScreen } from '@features/session/submitted-screen';
+import { ScreenPermissionScreen } from '@features/session/screen-permission-screen';
+import { CompletedDetailScreen } from '@features/assignment/completed-detail-screen';
+
+type CompletedScore = { numericScore: number; feedback: string } | null;
 
 type Route =
   | { name: 'loading' }
@@ -16,8 +20,10 @@ type Route =
   | { name: 'dashboard' }
   | { name: 'brief'; instanceId: string }
   | { name: 'rules'; instanceId: string }
+  | { name: 'screen-permission'; instanceId: string }
   | { name: 'session'; sessionId: string; instanceId?: string; recovered?: boolean }
-  | { name: 'submitted' };
+  | { name: 'submitted' }
+  | { name: 'completed'; instanceId: string; sessionId: string; score: CompletedScore };
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -70,6 +76,9 @@ const Inner = () => {
         <DashboardScreen
           onPickAssignment={(instanceId) => setRoute({ name: 'brief', instanceId })}
           onResumeSession={(sessionId) => setRoute({ name: 'session', sessionId })}
+          onOpenCompleted={(instanceId, sessionId, score) =>
+            setRoute({ name: 'completed', instanceId, sessionId, score })
+          }
           onSignOut={() => setRoute({ name: 'sign-in' })}
         />
       );
@@ -89,6 +98,16 @@ const Inner = () => {
           onStarted={(sessionId) =>
             setRoute({ name: 'session', sessionId, instanceId: route.instanceId })
           }
+          onNeedsScreenPermission={() =>
+            setRoute({ name: 'screen-permission', instanceId: route.instanceId })
+          }
+        />
+      );
+    case 'screen-permission':
+      return (
+        <ScreenPermissionScreen
+          onCancel={() => setRoute({ name: 'rules', instanceId: route.instanceId })}
+          onGranted={() => setRoute({ name: 'rules', instanceId: route.instanceId })}
         />
       );
     case 'session':
@@ -102,6 +121,15 @@ const Inner = () => {
       );
     case 'submitted':
       return <SubmittedScreen onContinue={() => setRoute({ name: 'dashboard' })} />;
+    case 'completed':
+      return (
+        <CompletedDetailScreen
+          instanceId={route.instanceId}
+          sessionId={route.sessionId}
+          score={route.score}
+          onBack={() => setRoute({ name: 'dashboard' })}
+        />
+      );
   }
 };
 

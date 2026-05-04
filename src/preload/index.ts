@@ -9,6 +9,7 @@ import {
   type SessionEndedPayload,
   type AbnormalRecoveryPayload,
   type CaptureNowResult,
+  type ScreenPermissionStatus,
 } from '../ipc/channels';
 
 const subscribe = <T>(channel: string, handler: (payload: T) => void) => {
@@ -36,6 +37,16 @@ const api = {
     onEnded: (cb: (p: SessionEndedPayload) => void) => subscribe(CHANNELS.sessionEnded, cb),
     onAbnormalRecovered: (cb: (p: AbnormalRecoveryPayload) => void) =>
       subscribe(CHANNELS.sessionAbnormalRecovered, cb),
+  },
+  permissions: {
+    screenStatus: (): Promise<ScreenPermissionStatus> =>
+      ipcRenderer.invoke(CHANNELS.permissionScreenStatus),
+    requestScreen: (): Promise<ScreenPermissionStatus> =>
+      ipcRenderer.invoke(CHANNELS.permissionRequestScreen),
+    openSettings: (): Promise<void> => ipcRenderer.invoke(CHANNELS.permissionOpenSettings),
+  },
+  app: {
+    relaunch: (): Promise<void> => ipcRenderer.invoke(CHANNELS.appRelaunch),
   },
   tray: {
     updateStatus: (status: string): Promise<void> =>

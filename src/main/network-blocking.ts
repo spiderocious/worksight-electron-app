@@ -7,6 +7,7 @@ import { app } from 'electron';
 import { apiRequest } from './api-client';
 import { ALWAYS_ALLOW_HOSTS } from './config';
 import { networkDirtyFlag } from './session-state';
+import { HTTP_LISTEN_PORT, HTTPS_LISTEN_PORT } from './blocked-listener';
 
 const execAsync = promisify(exec);
 
@@ -49,11 +50,27 @@ const buildHostsBlock = (domains: string[]): string => {
   return lines.join('\n');
 };
 
-const buildPfRules = (domains: string[]): string => {
-  const lines = ['# WorkSight pf rules — generated, do not edit'];
-  for (const d of domains) {
-    lines.push(`block drop quick proto { tcp udp } to any port { 80 443 } host ${d}`);
-  }
+/**
+ * pf ruleset structure:
+ *
+ *   1. `rdr` rules redirect locally-destined traffic on 80/443 to our high
+ *      ports (8080/8443) where the WorkSight blocked-listener picks it up.
+ *      Since /etc/hosts redirects every blocked domain to 127.0.0.1, ALL
+ *      connection attempts to those domains end up funneled here.
+ *   2. The listener reads enough bytes to extract the hostname (TLS SNI or
+ *      HTTP Host header), records the attempt, takes a screenshot, then drops
+ *      the connection. The candidate's browser shows "site can't be reached".
+ *
+ * pf rules require an `anchor` for `rdr` and a separate file for the rules
+ * themselves on macOS Sonoma+. We use the simpler form which still works:
+ * load via `pfctl -f` and let the rules apply globally.
+ */
+const buildPfRules = (httpPort: number, httpsPort: number): string => {
+  const lines = [
+    '# WorkSight pf rules — generated, do not edit',
+    `rdr pass on lo0 inet proto tcp from any to 127.0.0.1 port 80  -> 127.0.0.1 port ${httpPort}`,
+    `rdr pass on lo0 inet proto tcp from any to 127.0.0.1 port 443 -> 127.0.0.1 port ${httpsPort}`,
+  ];
   return lines.join('\n') + '\n';
 };
 
@@ -76,7 +93,7 @@ export const applyBlock = async (domains: string[]): Promise<void> => {
   fs.writeFileSync(tmpHosts, next);
 
   const tmpPf = PF_RULES_PATH;
-  fs.writeFileSync(tmpPf, buildPfRules(domains));
+  fs.writeFileSync(tmpPf, buildPfRules(HTTP_LISTEN_PORT, HTTPS_LISTEN_PORT));
 
   // Mark the dirty flag BEFORE we touch any system state. If sudoExec throws,
   // we still want the next launch to know to run a defensive restoreNetwork.

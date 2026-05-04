@@ -1,6 +1,6 @@
 {
   "name": "worksight-electron",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "WorkSight candidate desktop app (macOS)",
   "main": "dist-electron/main/index.js",
   "type": "commonjs",
@@ -34,8 +34,18 @@
     ],
     "mac": {
       "target": [
-        { "target": "zip", "arch": ["arm64"] },
-        { "target": "zip", "arch": ["x64"] }
+        {
+          "target": "zip",
+          "arch": [
+            "arm64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "x64"
+          ]
+        }
       ],
       "category": "public.app-category.developer-tools",
       "identity": null,
