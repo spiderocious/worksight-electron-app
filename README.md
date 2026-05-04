@@ -4,6 +4,25 @@ The candidate-facing desktop app for WorkSight. macOS-only by design (the networ
 
 ---
 
+## Install (for candidates)
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/spiderocious/worksight-electron-app/main/install.sh | bash
+```
+
+That's it. The script detects your CPU architecture (Apple Silicon vs Intel), downloads the matching unsigned `.app.zip` from the latest GitHub Release, drops it in `/Applications`, and clears the `com.apple.quarantine` attribute so Gatekeeper lets it open.
+
+To pin a specific version:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/spiderocious/worksight-electron-app/main/install.sh \
+  | WORKSIGHT_VERSION=0.1.0 bash
+```
+
+After install, launch with `open -a WorkSight` or from the Applications folder. You'll need a 10-character access code from your reviewer to sign in.
+
+---
+
 ## Architecture
 
 Three processes, one project:
