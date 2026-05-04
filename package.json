@@ -6,15 +6,16 @@
   "type": "commonjs",
   "scripts": {
     "dev:renderer": "vite",
-    "dev:main": "tsc -p tsconfig.electron.json --watch",
+    "dev:main": "npm run gen:build-env && tsc -p tsconfig.electron.json --watch",
     "dev:electron": "wait-on http://localhost:5174 && wait-on dist-electron/main/index.js && env -u ELECTRON_RUN_AS_NODE WORKSIGHT_DEV_URL=http://localhost:5174 WORKSIGHT_API=http://localhost:4000/api ./node_modules/.bin/electron .",
     "dev": "concurrently -k -n renderer,main,electron -c green,blue,magenta \"npm run dev:renderer\" \"npm run dev:main\" \"npm run dev:electron\"",
+    "gen:build-env": "node scripts/generate-build-env.cjs",
     "build:renderer": "vite build",
     "build:main": "tsc -p tsconfig.electron.json",
-    "build": "npm run build:renderer && npm run build:main",
+    "build": "npm run gen:build-env && npm run build:renderer && npm run build:main",
     "dist": "npm run build && electron-builder --mac",
     "start": "electron .",
-    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.electron.json --noEmit"
+    "typecheck": "npm run gen:build-env && tsc -p tsconfig.json --noEmit && tsc -p tsconfig.electron.json --noEmit"
   },
   "build": {
     "appId": "com.worksight.candidate",

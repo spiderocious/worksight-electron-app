@@ -33,12 +33,9 @@ const parseDotenv = (raw) => {
   return out;
 };
 
-if (!fs.existsSync(envPath)) {
-  console.warn(`[build-env] ${envPath} not found — skipping. Main will use localhost defaults.`);
-  process.exit(0);
-}
-
-const env = parseDotenv(fs.readFileSync(envPath, 'utf8'));
+const env = fs.existsSync(envPath)
+  ? parseDotenv(fs.readFileSync(envPath, 'utf8'))
+  : (console.warn(`[build-env] ${envPath} not found — emitting empty stub (will fall back to localhost).`), {});
 
 // Renderer reads VITE_WORKSIGHT_API; main reads WORKSIGHT_API. The .env file
 // holds the renderer var; we mirror it for main so they always match.

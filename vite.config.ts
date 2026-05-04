@@ -5,6 +5,9 @@ import path from 'node:path';
 export default defineConfig({
   plugins: [react()],
   root: path.resolve(__dirname, 'src/renderer'),
+  // .env files live at the project root, not under src/renderer/. Without this
+  // override, Vite would look for src/renderer/.env.production and miss it.
+  envDir: __dirname,
   base: './',
   build: {
     outDir: path.resolve(__dirname, 'dist'),
