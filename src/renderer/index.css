@@ -1,0 +1,40 @@
+@import url('https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,500;1,400&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: light only;
+  }
+  html, body, #root {
+    height: 100%;
+  }
+  body {
+    @apply bg-surface-subtle text-ink font-sans antialiased;
+    letter-spacing: -0.005em;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  input, textarea {
+    user-select: text;
+    -webkit-user-select: text;
+  }
+  h1, h2, h3, h4 {
+    @apply font-display tracking-tight text-ink;
+    letter-spacing: -0.012em;
+  }
+  code, pre, kbd {
+    @apply font-mono;
+  }
+}
+
+@layer components {
+  .ws-card {
+    @apply bg-surface border border-line rounded-xl shadow-soft;
+  }
+  .ws-link {
+    @apply text-brand-700 hover:text-brand-800 underline-offset-4 hover:underline;
+  }
+}
