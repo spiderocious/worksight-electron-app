@@ -11,6 +11,7 @@ import { authStore } from './auth-store';
 import { sessionManager } from './session-manager';
 import { initTray, refreshIdleStatus, restoreIdleAfterSession, setIdleStatusManually } from './tray-controller';
 import { restoreNetwork } from './network-blocking';
+import { screenshotLoop } from './screenshot-loop';
 
 const DEV_URL = process.env.WORKSIGHT_DEV_URL ?? 'http://localhost:5174';
 const isDev = !app.isPackaged;
@@ -85,6 +86,9 @@ const registerIpc = () => {
   });
   ipcMain.handle(CHANNELS.sessionRequestState, async (): Promise<SessionStateSnapshot> => {
     return sessionManager.state();
+  });
+  ipcMain.handle(CHANNELS.sessionCaptureNow, async () => {
+    return screenshotLoop.captureNow();
   });
   ipcMain.handle(CHANNELS.trayUpdateStatus, (_e, s: string) => {
     setIdleStatusManually(s);

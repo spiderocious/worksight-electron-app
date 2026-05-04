@@ -1,15 +1,20 @@
 import { useState } from 'react';
-import { Button, Card } from '@shared/ui';
-import {
-  ArrowLeft,
-  ShieldAlert,
-  Hourglass,
-  Camera,
-  Lock,
-  Activity,
-} from '@shared/ui/icons';
+import { useQuery } from '@tanstack/react-query';
+import { Button, Card, EmptyState, PageLoader } from '@shared/ui';
+import { ArrowLeft, ListChecks } from '@shared/ui/icons';
+import { ICON_BY_NAME, renderIconByName } from '@shared/ui/icon-catalog';
 import { useToast } from '@shared/hooks/use-toast';
 import { ws } from '@shared/window-api';
+import { api } from '@shared/services/api-client';
+
+interface CandidateRule {
+  id: string;
+  icon: string;
+  title: string;
+  subtitle: string;
+  active: boolean;
+  order: number;
+}
 
 interface Props {
   instanceId: string;
@@ -17,30 +22,39 @@ interface Props {
   onStarted: (sessionId: string) => void;
 }
 
-const Rule = ({
-  icon,
+const RuleRow = ({
+  iconName,
   title,
-  body,
+  subtitle,
 }: {
-  icon: React.ReactNode;
+  iconName: string;
   title: string;
-  body: string;
-}) => (
-  <div className="flex gap-4 py-4">
-    <div className="shrink-0 w-9 h-9 rounded-lg bg-brand-50 text-brand-700 flex items-center justify-center">
-      {icon}
+  subtitle: string;
+}) => {
+  const Icon = ICON_BY_NAME[iconName];
+  return (
+    <div className="flex gap-4 py-4">
+      <div className="shrink-0 w-9 h-9 rounded-lg bg-brand-50 text-brand-700 flex items-center justify-center">
+        {Icon ? <Icon size={18} /> : renderIconByName('CircleDot', { size: 18 })}
+      </div>
+      <div>
+        <p className="font-medium text-ink">{title}</p>
+        <p className="text-sm text-ink-muted leading-relaxed mt-0.5">{subtitle}</p>
+      </div>
     </div>
-    <div>
-      <p className="font-medium text-ink">{title}</p>
-      <p className="text-sm text-ink-muted leading-relaxed mt-0.5">{body}</p>
-    </div>
-  </div>
-);
+  );
+};
 
 export const RulesScreen = ({ instanceId, onCancel, onStarted }: Props) => {
   const [acknowledged, setAcknowledged] = useState(false);
   const [starting, setStarting] = useState(false);
   const { push } = useToast();
+
+  const { data: rules, isLoading } = useQuery({
+    queryKey: ['candidate-rules'],
+    queryFn: () => api<CandidateRule[]>('/candidate/rules'),
+    staleTime: 60_000,
+  });
 
   const handleStart = async () => {
     setStarting(true);
@@ -66,38 +80,28 @@ export const RulesScreen = ({ instanceId, onCancel, onStarted }: Props) => {
       <header className="mb-6">
         <h1 className="font-display text-3xl tracking-tight">Before you start</h1>
         <p className="text-sm text-ink-muted mt-2 max-w-xl">
-          By starting this session, you agree to everything below. Make sure you read each
-          item carefully — these restrictions are the whole point of WorkSight.
+          By starting this session, you agree to everything below. Make sure you read each item
+          carefully — these restrictions are the whole point of WorkSight.
         </p>
       </header>
 
-      <Card className="divide-y divide-line p-0 px-5">
-        <Rule
-          icon={<ShieldAlert size={18} />}
-          title="AI tools and reference sites will be blocked"
-          body="ChatGPT, Claude, Gemini, Copilot, Stack Overflow, MDN and similar sites will be unreachable on this Mac for the duration of the session. The block is enforced at the network level."
-        />
-        <Rule
-          icon={<Hourglass size={18} />}
-          title="The countdown cannot be paused"
-          body="The timer runs on the WorkSight server. It will continue counting down even if the WorkSight app is closed or this Mac is restarted. When it reaches zero, the session is over."
-        />
-        <Rule
-          icon={<Lock size={18} />}
-          title="The app cannot be quit normally"
-          body="Cmd+Q is intercepted while a session is active. To leave the session you must submit your work."
-        />
-        <Rule
-          icon={<Camera size={18} />}
-          title="Random screenshots will be captured"
-          body="Your screen will be captured at random intervals between 1 and 4 minutes. Your reviewer will see these as part of evaluating your submission."
-        />
-        <Rule
-          icon={<Activity size={18} />}
-          title="Force-quitting will be flagged"
-          body="If you force-quit WorkSight or restart the machine, the session is flagged as abnormally terminated. The server will still close the session at the deadline whether or not you submit."
-        />
-      </Card>
+      {isLoading ? (
+        <PageLoader />
+      ) : !rules || rules.length === 0 ? (
+        <Card>
+          <EmptyState
+            icon={<ListChecks size={32} strokeWidth={1.5} />}
+            title="No rules configured"
+            description="Your reviewer hasn't added any session rules yet. Ask them to set them up before you start."
+          />
+        </Card>
+      ) : (
+        <Card className="divide-y divide-line p-0 px-5">
+          {rules.map((r) => (
+            <RuleRow key={r.id} iconName={r.icon} title={r.title} subtitle={r.subtitle} />
+          ))}
+        </Card>
+      )}
 
       <label className="mt-8 flex items-start gap-3 cursor-pointer">
         <input
@@ -115,7 +119,11 @@ export const RulesScreen = ({ instanceId, onCancel, onStarted }: Props) => {
         <Button variant="secondary" onClick={onCancel} disabled={starting}>
           Cancel
         </Button>
-        <Button onClick={handleStart} disabled={!acknowledged} loading={starting}>
+        <Button
+          onClick={handleStart}
+          disabled={!acknowledged || isLoading || (rules && rules.length === 0)}
+          loading={starting}
+        >
           I understand — start session
         </Button>
       </div>

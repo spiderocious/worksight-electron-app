@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
-import { Badge, Button, Card, CardHeader, EmptyState, Logo, PageLoader } from '@shared/ui';
+import { useIsFetching } from '@tanstack/react-query';
+import { Badge, Button, Card, EmptyState, Logo, PageLoader } from '@shared/ui';
 import {
   Clock,
   ChevronRight,
@@ -7,6 +8,7 @@ import {
   CheckCircle2,
   LogOut,
   Star,
+  RefreshCw,
 } from '@shared/ui/icons';
 import { useToast } from '@shared/hooks/use-toast';
 import { ws } from '@shared/window-api';
@@ -22,6 +24,10 @@ interface Props {
 export const DashboardScreen = ({ onPickAssignment, onResumeSession, onSignOut }: Props) => {
   const { data, isLoading, refetch } = useCandidateMe();
   const { push } = useToast();
+  // Global "is anything in flight?" signal — covers initial load, background refetch,
+  // and any other queries fired in this view.
+  const fetchingCount = useIsFetching();
+  const isBusy = fetchingCount > 0;
 
   useEffect(() => {
     if (data?.topBarStatus) {
@@ -45,11 +51,20 @@ export const DashboardScreen = ({ onPickAssignment, onResumeSession, onSignOut }
       <header className="px-10 pt-10 pb-6 flex items-center justify-between">
         <Logo />
         <div className="flex items-center gap-3">
+          <Button
+            variant="ghost"
+            size="sm"
+            iconLeft={<RefreshCw size={14} className={isBusy ? 'animate-spin' : undefined} />}
+            onClick={() => void refetch()}
+            disabled={isBusy}
+          >
+            {isBusy ? 'Refreshing…' : 'Refresh'}
+          </Button>
           <div className="text-right">
             <p className="text-sm font-medium text-ink">{data.candidate.name}</p>
             <p className="text-xs text-ink-soft">{data.candidate.email}</p>
           </div>
-          <Button variant="ghost" iconLeft={<LogOut size={14} />} onClick={handleSignOut}>
+          <Button variant="ghost" size="sm" iconLeft={<LogOut size={14} />} onClick={handleSignOut}>
             Sign out
           </Button>
         </div>
@@ -163,11 +178,6 @@ export const DashboardScreen = ({ onPickAssignment, onResumeSession, onSignOut }
           </section>
         )}
 
-        <div className="mt-10">
-          <Button variant="ghost" onClick={() => void refetch()}>
-            Refresh
-          </Button>
-        </div>
       </main>
     </div>
   );
