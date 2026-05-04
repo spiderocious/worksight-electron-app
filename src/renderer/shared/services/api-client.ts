@@ -1,6 +1,10 @@
 import { ws } from '../window-api';
 
-const API_BASE = 'http://localhost:4000/api';
+// Vite injects VITE_* values at build time from .env.production / .env.development.
+// Defaults are LOCAL on purpose — real URLs live only in env config.
+const API_BASE =
+  (import.meta.env.VITE_WORKSIGHT_API as string | undefined) ??
+  'http://localhost:4000/api';
 
 export class ApiError extends Error {
   status: number;

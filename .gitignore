@@ -5,3 +5,13 @@ out
 .vite
 *.log
 .DS_Store
+release
+
+# Generated at build time by scripts/generate-build-env.cjs
+src/main/build-env.ts
+
+# Env files — never commit production URLs to source
+.env.production
+.env.development.local
+.env.local
+.env.*

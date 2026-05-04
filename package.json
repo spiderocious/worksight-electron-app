@@ -7,13 +7,43 @@
   "scripts": {
     "dev:renderer": "vite",
     "dev:main": "tsc -p tsconfig.electron.json --watch",
-    "dev:electron": "wait-on http://localhost:5174 && wait-on dist-electron/main/index.js && env -u ELECTRON_RUN_AS_NODE WORKSIGHT_DEV_URL=http://localhost:5174 ./node_modules/.bin/electron .",
+    "dev:electron": "wait-on http://localhost:5174 && wait-on dist-electron/main/index.js && env -u ELECTRON_RUN_AS_NODE WORKSIGHT_DEV_URL=http://localhost:5174 WORKSIGHT_API=http://localhost:4000/api ./node_modules/.bin/electron .",
     "dev": "concurrently -k -n renderer,main,electron -c green,blue,magenta \"npm run dev:renderer\" \"npm run dev:main\" \"npm run dev:electron\"",
     "build:renderer": "vite build",
     "build:main": "tsc -p tsconfig.electron.json",
     "build": "npm run build:renderer && npm run build:main",
+    "dist": "npm run build && electron-builder --mac",
     "start": "electron .",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.electron.json --noEmit"
+  },
+  "build": {
+    "appId": "com.worksight.candidate",
+    "productName": "WorkSight",
+    "copyright": "© WorkSight",
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "files": [
+      "dist/**/*",
+      "dist-electron/**/*",
+      "package.json",
+      "!**/*.map",
+      "!**/*.ts"
+    ],
+    "mac": {
+      "target": [
+        { "target": "zip", "arch": ["arm64"] },
+        { "target": "zip", "arch": ["x64"] }
+      ],
+      "category": "public.app-category.developer-tools",
+      "identity": null,
+      "hardenedRuntime": false,
+      "gatekeeperAssess": false
+    },
+    "extraMetadata": {
+      "main": "dist-electron/main/index.js"
+    }
   },
   "dependencies": {
     "@tanstack/react-query": "^5.100.9",
@@ -32,6 +62,7 @@
     "concurrently": "^9.2.1",
     "cross-env": "^10.1.0",
     "electron": "^41.5.0",
+    "electron-builder": "^26.8.1",
     "postcss": "^8.5.13",
     "tailwindcss": "^3.4.19",
     "typescript": "^6.0.3",
