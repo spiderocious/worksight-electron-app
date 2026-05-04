@@ -10,13 +10,24 @@
 //
 // Source code never references real production hosts directly.
 
-import { BUILD_API_BASE, BUILD_FILE_SERVICE_BASE } from './build-env';
+import { BUILD_ALLOW_SCREENSHOTS, BUILD_API_BASE, BUILD_FILE_SERVICE_BASE } from './build-env';
 
 export const API_BASE =
   process.env.WORKSIGHT_API || BUILD_API_BASE || 'http://localhost:4000/api';
 
 export const FILE_SERVICE_BASE =
   process.env.WORKSIGHT_FILE_SERVICE || BUILD_FILE_SERVICE_BASE || 'http://localhost:4000';
+
+// Feature flag: when false, the screenshot loop is a no-op and the macOS
+// Screen Recording permission preflight is skipped. Runtime env override wins
+// over the baked-in build flag for easy local toggling. Defaults to true.
+const parseBoolEnv = (v: string | undefined): boolean | null => {
+  if (v === undefined || v === '') return null;
+  return /^(true|1|yes|on)$/i.test(v);
+};
+const runtimeFlag = parseBoolEnv(process.env.ALLOW_SCREENSHOTS);
+export const ALLOW_SCREENSHOTS =
+  runtimeFlag !== null ? runtimeFlag : BUILD_ALLOW_SCREENSHOTS;
 
 // Hosts these are whitelisted from blocking — the candidate must always be able to
 // reach them while a session is in progress.

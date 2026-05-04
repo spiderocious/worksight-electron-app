@@ -71,11 +71,6 @@ export const ScreenPermissionScreen = ({ onCancel, onGranted }: Props) => {
         <h1 className="font-display text-3xl tracking-tight">
           WorkSight needs Screen Recording permission
         </h1>
-        <p className="text-base text-ink-muted mt-3 leading-relaxed">
-          To capture screenshots during your session, macOS needs you to grant
-          WorkSight permission to record the screen. Without it, your reviewer
-          would only see black images and your session would be invalidated.
-        </p>
       </div>
 
       {status === 'not-determined' ? (
@@ -119,8 +114,9 @@ export const ScreenPermissionScreen = ({ onCancel, onGranted }: Props) => {
           <div className="ws-card p-4 bg-amber-50 border-amber-200 text-sm text-amber-900 flex items-start gap-3">
             <ShieldAlert size={16} className="shrink-0 mt-0.5" />
             <p>
-              The relaunch is non-negotiable — it's a macOS requirement, not ours.
-              Don't skip it.
+                Please click the button below to open System Settings. The permission prompt is triggered by macOS itself.
+                If you don't see the toggle for WorkSight in System Settings, make sure to scroll all the way down to the "Screen &amp; System Audio Recording" section.
+                When done, come back and click the relaunch button to apply the changes.0935
             </p>
           </div>
 

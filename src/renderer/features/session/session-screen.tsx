@@ -5,6 +5,7 @@ import { Hourglass, Camera, Activity, ShieldAlert } from '@shared/ui/icons';
 import { useToast } from '@shared/hooks/use-toast';
 import { ws } from '@shared/window-api';
 import { api } from '@shared/services/api-client';
+import { ALLOW_SCREENSHOTS } from '@shared/feature-flags';
 import type { InstanceFull } from '@shared/types';
 
 interface CandidateSettings {
@@ -80,7 +81,10 @@ export const SessionScreen = ({ sessionId, recovered, initialInstanceId, onEnded
   const submissionType = instance?.assignment.submissionType ?? 'both';
   const wantsLink = submissionType === 'link' || submissionType === 'both';
   const wantsText = submissionType === 'text' || submissionType === 'both';
-  const showWarning = settings?.showScreenshotWarning ?? true;
+  // Hide the in-session screenshot affordance when either the reviewer turned
+  // it off OR the build itself has screenshots disabled.
+  const showWarning =
+    ALLOW_SCREENSHOTS && (settings?.showScreenshotWarning ?? true);
 
   const handleCaptureNow = async () => {
     if (capturing) return;

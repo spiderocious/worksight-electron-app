@@ -6,6 +6,7 @@ import { ICON_BY_NAME, renderIconByName } from '@shared/ui/icon-catalog';
 import { useToast } from '@shared/hooks/use-toast';
 import { ws } from '@shared/window-api';
 import { api } from '@shared/services/api-client';
+import { ALLOW_SCREENSHOTS } from '@shared/feature-flags';
 
 interface CandidateRule {
   id: string;
@@ -64,11 +65,16 @@ export const RulesScreen = ({ instanceId, onCancel, onStarted, onNeedsScreenPerm
       // come back as black images and the session is worthless. Route to a
       // dedicated screen rather than letting the candidate stumble into a
       // broken session.
-      const status = await ws().permissions.screenStatus();
-      if (status !== 'granted') {
-        setStarting(false);
-        onNeedsScreenPermission();
-        return;
+      //
+      // Skipped when ALLOW_SCREENSHOTS is off — the screenshot loop is a no-op
+      // in that build, so there's nothing to protect.
+      if (ALLOW_SCREENSHOTS) {
+        const status = await ws().permissions.screenStatus();
+        if (status !== 'granted') {
+          setStarting(false);
+          onNeedsScreenPermission();
+          return;
+        }
       }
 
       const result = await ws().session.start({ instanceId });

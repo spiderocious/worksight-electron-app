@@ -14,7 +14,7 @@ import type {
   SessionSubmitArgs,
   SessionTickPayload,
 } from '../ipc/channels';
-import { SESSION_TICK_MS } from './config';
+import { ALLOW_SCREENSHOTS, SESSION_TICK_MS } from './config';
 
 interface ActiveSession {
   sessionId: string;
@@ -77,9 +77,14 @@ class SessionManager {
     //    screenshot loop captures black frames silently. The renderer should
     //    have caught this on the rules screen and routed to the permissions
     //    screen, but we belt-and-braces here too.
-    const screenStatus = getScreenPermissionStatus();
-    if (screenStatus !== 'granted') {
-      throw new Error('Screen Recording permission required. Open System Settings → Privacy & Security → Screen & System Audio Recording and enable WorkSight.');
+    //
+    //    Skipped entirely when ALLOW_SCREENSHOTS is off — there's no point
+    //    asking for permission to do a thing the build won't do.
+    if (ALLOW_SCREENSHOTS) {
+      const screenStatus = getScreenPermissionStatus();
+      if (screenStatus !== 'granted') {
+        throw new Error('Screen Recording permission required. Open System Settings → Privacy & Security → Screen & System Audio Recording and enable WorkSight.');
+      }
     }
 
     // 1. Apply network block FIRST (prompts for admin password). If this fails

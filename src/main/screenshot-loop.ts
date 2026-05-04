@@ -2,6 +2,7 @@ import { desktopCapturer, screen } from 'electron';
 import { apiRequest } from './api-client';
 import { getUploadUri, putFile } from './file-service';
 import {
+  ALLOW_SCREENSHOTS,
   SCREENSHOT_MAX_INTERVAL_MS,
   SCREENSHOT_MIN_INTERVAL_MS,
 } from './config';
@@ -30,6 +31,13 @@ export class ScreenshotLoop {
   private interval: ScreenshotInterval = DEFAULT_INTERVAL;
 
   start(sessionId: string, interval: ScreenshotInterval = DEFAULT_INTERVAL) {
+    if (!ALLOW_SCREENSHOTS) {
+      // Feature-flagged off — the loop is a no-op for this build. We still
+      // record the sessionId so captureNow() can surface a friendly error.
+      this.sessionId = sessionId;
+      this.running = false;
+      return;
+    }
     this.sessionId = sessionId;
     this.interval = sanitizeInterval(interval);
     this.running = true;
@@ -51,6 +59,9 @@ export class ScreenshotLoop {
    * Returns an outcome the renderer can show to the user.
    */
   async captureNow(): Promise<CaptureOutcome> {
+    if (!ALLOW_SCREENSHOTS) {
+      return { ok: false, error: 'Screenshots are disabled in this build.' };
+    }
     if (!this.sessionId) {
       return { ok: false, error: 'No active session' };
     }
