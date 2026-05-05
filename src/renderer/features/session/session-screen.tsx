@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Badge, Button, Card, CardHeader, Input, Spinner, Textarea } from '@shared/ui';
+import { Badge, Button, Card, CardHeader, Input, MarkdownBody, Spinner, Textarea } from '@shared/ui';
 import { Hourglass, Camera, Activity, ShieldAlert } from '@shared/ui/icons';
 import { useToast } from '@shared/hooks/use-toast';
 import { ws } from '@shared/window-api';
@@ -166,10 +166,12 @@ export const SessionScreen = ({ sessionId, recovered, initialInstanceId, onEnded
 
         <Card className="mt-6">
           <CardHeader title="Brief" />
-          <div className="text-sm whitespace-pre-wrap text-ink-muted leading-relaxed max-h-60 overflow-y-auto">
-            {(instance?.assignment.hideUntilStart
-              ? instance.assignment.mainBrief
-              : instance?.assignment.brief) ?? '—'}
+          <div className="max-h-60 overflow-y-auto">
+            <MarkdownBody>
+              {(instance?.assignment.hideUntilStart
+                ? instance.assignment.mainBrief
+                : instance?.assignment.brief) ?? '—'}
+            </MarkdownBody>
           </div>
         </Card>
 

@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { Badge, Card, CardHeader, EmptyState, PageLoader } from '@shared/ui';
+import { Badge, Card, CardHeader, EmptyState, MarkdownBody, PageLoader } from '@shared/ui';
 import {
   ArrowLeft,
   CheckCircle2,
@@ -165,10 +165,12 @@ export const CompletedDetailScreen = ({ instanceId, sessionId, score, onBack }: 
 
       <Card>
         <CardHeader title="Brief" subtitle="The test you worked on." />
-        <div className="text-sm whitespace-pre-wrap text-ink-muted leading-relaxed max-h-80 overflow-y-auto">
-          {(instance.assignment.hideUntilStart
-            ? instance.assignment.mainBrief
-            : instance.assignment.brief) ?? '—'}
+        <div className="max-h-80 overflow-y-auto">
+          <MarkdownBody>
+            {(instance.assignment.hideUntilStart
+              ? instance.assignment.mainBrief
+              : instance.assignment.brief) ?? '—'}
+          </MarkdownBody>
         </div>
       </Card>
     </div>

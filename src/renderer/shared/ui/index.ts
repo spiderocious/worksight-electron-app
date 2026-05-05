@@ -6,3 +6,4 @@ export { Badge } from './primitives/badge';
 export { Spinner, PageLoader } from './primitives/spinner';
 export { EmptyState } from './primitives/empty-state';
 export { Logo } from './logo';
+export { MarkdownBody } from './markdown-body';

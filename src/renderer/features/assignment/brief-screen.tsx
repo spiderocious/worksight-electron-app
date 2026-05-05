@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { Badge, Button, Card, CardHeader, PageLoader } from '@shared/ui';
+import { Badge, Button, Card, CardHeader, MarkdownBody, PageLoader } from '@shared/ui';
 import { ArrowLeft, Clock } from '@shared/ui/icons';
 import { api } from '@shared/services/api-client';
 import type { InstanceFull } from '@shared/types';
@@ -36,9 +36,7 @@ export const BriefScreen = ({ instanceId, onBack, onContinue }: Props) => {
 
       <Card>
         <CardHeader title="Brief" subtitle="Read carefully before you start." />
-        <div className="text-sm whitespace-pre-wrap text-ink leading-relaxed">
-          {data.assignment.brief}
-        </div>
+        <MarkdownBody>{data.assignment.brief}</MarkdownBody>
       </Card>
 
       <div className="mt-8 flex justify-end gap-2">
