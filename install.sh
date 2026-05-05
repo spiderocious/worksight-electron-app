@@ -102,15 +102,24 @@ fi
 log "Authorizing app (clearing quarantine attribute)..."
 xattr -dr com.apple.quarantine "$TARGET_APP" 2>/dev/null || true
 
+# -------------------- launch --------------------
+# Tiny pause so the quarantine strip + Launch Services registration settle
+# before we ask macOS to open the app. Best-effort — if it hiccups we don't
+# fail the install; the user can re-run `open -a WorkSight` from the message
+# below.
+log "Launching WorkSight..."
+sleep 1
+open -a "WorkSight" 2>/dev/null || true
+
 # -------------------- done --------------------
 cat <<EOF
 
-  ✓ WorkSight installed.
+  ✓ WorkSight installed and launched.
 
-  Open it with:
+  If it didn't open automatically, you can launch it yourself with:
       open -a WorkSight
 
-  Or just launch from Applications.
+  Or just open it from /Applications.
 
   Need help? https://github.com/${REPO}
 
