@@ -1,6 +1,6 @@
 {
   "name": "worksight-electron",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "WorkSight candidate desktop app (macOS)",
   "main": "dist-electron/main/index.js",
   "type": "commonjs",
