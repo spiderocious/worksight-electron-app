@@ -2,6 +2,12 @@
 
 The candidate-facing desktop app for WorkSight. macOS-only by design (the network-blocking layer uses `pf` and `/etc/hosts`). Electron + React + TypeScript.
 
+<img width="1396" height="1025" alt="Screenshot 2026-05-04 at 01 09 27" src="https://github.com/user-attachments/assets/ed1842a5-8d0d-4bd5-99f1-5a919d015d89" />
+<img width="1105" height="766" alt="Screenshot 2026-05-05 at 15 33 37" src="https://github.com/user-attachments/assets/4fb44c20-9ef3-4ef1-a6f4-61107325b7f3" />
+
+
+
+
 ---
 
 ## Install (for candidates)
