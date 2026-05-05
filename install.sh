@@ -36,9 +36,14 @@ if [ "$(uname -s)" != "Darwin" ]; then
 fi
 
 ARCH=$(uname -m)
+# Picking the right asset:
+#   - arm64 → must contain "arm64-mac.zip"
+#   - x86_64 → must end with "-mac.zip" AND must NOT contain "arm64"
+#     (because "arm64-mac.zip" also ends with "-mac.zip" — naive substring
+#     matching used to misfire and serve arm64 builds to Intel Macs).
 case "$ARCH" in
-  arm64)  ARCHIVE_SUFFIX="arm64-mac.zip" ;;
-  x86_64) ARCHIVE_SUFFIX="mac.zip" ;;
+  arm64)  ARCHIVE_SUFFIX="arm64-mac.zip" ; ASSET_INCLUDE="arm64-mac.zip"   ; ASSET_EXCLUDE="" ;;
+  x86_64) ARCHIVE_SUFFIX="mac.zip"       ; ASSET_INCLUDE="-mac.zip"        ; ASSET_EXCLUDE="arm64" ;;
   *)      fail "Unsupported architecture: $ARCH" ;;
 esac
 
@@ -50,13 +55,17 @@ if [ "$VERSION" = "latest" ]; then
   # the actual asset URL via the GitHub API so we don't 404 when the asset
   # filename doesn't match the redirect path.
   log "Resolving latest release..."
-  RESOLVED=$(curl -fsSL -H "Accept: application/vnd.github+json" \
+  ASSETS=$(curl -fsSL -H "Accept: application/vnd.github+json" \
     "https://api.github.com/repos/${REPO}/releases/latest" \
-    | grep -oE '"browser_download_url": *"[^"]+'"${ARCHIVE_SUFFIX}"'"' \
-    | head -n 1 \
+    | grep -oE '"browser_download_url": *"[^"]+\.zip"' \
     | sed -E 's/.*"([^"]+)"$/\1/')
+  if [ -n "$ASSET_EXCLUDE" ]; then
+    RESOLVED=$(printf '%s\n' "$ASSETS" | grep -v -- "$ASSET_EXCLUDE" | grep -- "$ASSET_INCLUDE" | head -n 1)
+  else
+    RESOLVED=$(printf '%s\n' "$ASSETS" | grep -- "$ASSET_INCLUDE" | head -n 1)
+  fi
   if [ -z "$RESOLVED" ]; then
-    fail "Couldn't find a ${ARCHIVE_SUFFIX} asset in the latest release of ${REPO}."
+    fail "Couldn't find a ${ARCH} asset in the latest release of ${REPO}."
   fi
   DOWNLOAD_URL="$RESOLVED"
 else
